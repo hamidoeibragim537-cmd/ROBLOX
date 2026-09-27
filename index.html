@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Roblox Tap</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(180deg, #eaf4ff 0%, #f5faff 100%);
+      color: #1a2b4a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px 40px;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* ЭМОДЗИ-иконка сверху */
+    .hero-emoji {
+      font-size: 120px;
+      line-height: 1;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 10px 20px rgba(255, 180, 0, 0.4));
+    }
+
+    /* Заголовок */
+    .title {
+      font-size: 42px;
+      font-weight: 900;
+      text-align: center;
+      line-height: 1.1;
+      margin-bottom: 12px;
+      color: #1a2b4a;
+    }
+    .title .accent { color: #2196f3; }
+
+    .subtitle {
+      font-size: 20px;
+      text-align: center;
+      color: #6b7a99;
+      margin-bottom: 30px;
+      line-height: 1.4;
+      max-width: 340px;
+    }
+
+    /* Счёт — большой */
+    .score-box {
+      background: #fff;
+      border-radius: 28px;
+      padding: 25px 40px;
+      margin-bottom: 25px;
+      box-shadow: 0 10px 30px rgba(33, 150, 243, 0.15);
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+      border: 2px solid #e3eefb;
+    }
+    .score {
+      font-size: 72px;
+      font-weight: 900;
+      color: #ffb700;
+      line-height: 1;
+      text-shadow: 0 4px 0 rgba(255, 183, 0, 0.2);
+    }
+    .per-tap {
+      font-size: 18px;
+      color: #6b7a99;
+      margin-top: 8px;
+      font-weight: 600;
+    }
+
+    /* МОНЕТА */
+    .coin {
+      width: 70vw;
+      height: 70vw;
+      max-width: 320px;
+      max-height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #ffe97a, #ffb700, #b87400);
+      box-shadow:
+        0 20px 50px rgba(255, 183, 0, 0.5),
+        inset 0 -15px 40px rgba(0,0,0,0.2),
+        inset 0 15px 40px rgba(255,255,255,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.08s ease;
+      font-size: 130px;
+      margin-bottom: 30px;
+      border: 6px solid #fff;
+    }
+    .coin:active { transform: scale(0.92); }
+
+    .float {
+      position: fixed;
+      font-size: 50px;
+      font-weight: 900;
+      color: #ffb700;
+      pointer-events: none;
+      animation: floatUp 0.9s ease-out forwards;
+      text-shadow: 0 0 20px rgba(255,215,0,1);
+      z-index: 999;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-180px) scale(1.6); }
+    }
+
+    /* ДВЕ КНОПКИ КАК НА СКРИНЕ */
+    .two-buttons {
+      display: flex;
+      gap: 14px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 20px;
+    }
+    .btn-card {
+      flex: 1;
+      background: #eef6ff;
+      border-radius: 24px;
+      padding: 20px 10px;
+      text-align: center;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-card.active {
+      background: #e3f0ff;
+      border-color: #2196f3;
+      box-shadow: 0 8px 20px rgba(33, 150, 243, 0.2);
+    }
+    .btn-card .ico {
+      font-size: 48px;
+      display: block;
+      margin-bottom: 10px;
+      line-height: 1;
+    }
+    .btn-card .lbl {
+      font-size: 17px;
+      font-weight: 800;
+      color: #1a2b4a;
+    }
+
+    /* СТАТИСТИКА — как блок «Серия 3 дня» */
+    .stat-box {
+      background: #fff;
+      border-radius: 24px;
+      padding: 20px 24px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 25px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border: 2px solid #e3eefb;
+    }
+    .stat-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .stat-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .stat-emoji { font-size: 36px; }
+    .stat-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #1a2b4a;
+      line-height: 1.2;
+    }
+    .stat-sub {
+      font-size: 14px;
+      color: #6b7a99;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .stat-right {
+      font-size: 26px;
+      font-weight: 900;
+      color: #ff7a00;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 12px;
+      background: #e3eefb;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4fc3f7, #2196f3);
+      border-radius: 10px;
+      transition: width 0.4s ease;
+      width: 0%;
+    }
+
+    /* БОЛЬШАЯ СИНЯЯ КНОПКА ВНИЗУ */
+    .big-btn {
+      width: 100%;
+      max-width: 420px;
+      padding: 24px 32px;
+      border: none;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #4fa3ff, #2196f3);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(33, 150, 243, 0.4);
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+    .big-btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4);
+    }
+    .big-btn:disabled {
+      background: #c5d3e0;
+      box-shadow: none;
+      cursor: not-allowed;
+      color: #8a9bb0;
+    }
+
+    /* ЛИДЕРБОРД — карточками */
+    .leaderboard {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      border: 2px solid #e3eefb;
+    }
+    .leaderboard h3 {
+      font-size: 22px;
+      font-weight: 900;
+      color: #1a2b4a;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .lb-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-radius: 14px;
+      margin-bottom: 8px;
+      font-size: 17px;
+      font-weight: 700;
+      background: #f5faff;
+    }
+    .lb-row.me {
+      background: #e3f0ff;
+      border: 2px solid #2196f3;
+    }
+    .lb-row .medal { margin-right: 10px; font-size: 22px; }
+    .lb-row .name { flex: 1; text-align: left; color: #1a2b4a; }
+    .lb-row .val { color: #2196f3; font-weight: 900; }
+  </style>
+</head>
+<body>
+
+  <!-- Эмодзи сверху -->
+  <div class="hero-emoji">🪙</div>
+
+  <!-- Заголовок -->
+  <div class="title">Roblox <span class="accent">Tap</span> 🚀</div>
+  <div class="subtitle">Тапай по монете и стань топ-1!</div>
+
+  <!-- Счёт -->
+  <div class="score-box">
+    <div class="score" id="score">0</div>
+    <div class="per-tap" id="perTap">+1 за тап</div>
+  </div>
+
+  <!-- Монета -->
+  <div class="coin" id="coin">🪙</div>
+
+  <!-- Две кнопки как на скрине -->
+  <div class="two-buttons">
+    <div class="btn-card active" id="tabTap">
+      <span class="ico">👆</span>
+      <div class="lbl">Тапать</div>
+    </div>
+    <div class="btn-card" id="tabUpgrade">
+      <span class="ico">⚡</span>
+      <div class="lbl">Апгрейд</div>
+    </div>
+  </div>
+
+  <!-- Статистика как «Серия 3 дня» -->
+  <div class="stat-box">
+    <div class="stat-top">
+      <div class="stat-left">
+        <div class="stat-emoji">🔥</div>
+        <div>
+          <div class="stat-title">Серия тапов</div>
+          <div class="stat-sub" id="streakText">Тапни, чтобы начать!</div>
+        </div>
+      </div>
+      <div class="stat-right" id="streakNum">0/10</div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- БОЛЬШАЯ КНОПКА -->
+  <button class="big-btn" id="mainBtn">
+    Улучшить ×100 (50 🪙) <span>→</span>
+  </button>
+
+  <!-- ЛИДЕРБОРД -->
+  <div class="leaderboard">
+    <h3>🏆 Топ игроков</h3>
+    <div id="lbList"></div>
+  </div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready();
+  tg?.expand();
+
+  let score = parseInt(localStorage.getItem('score') || '0');
+  let perTap = parseInt(localStorage.getItem('perTap') || '1');
+  let upgradeCost = parseInt(localStorage.getItem('upgradeCost') || '50');
+  let streak = parseInt(localStorage.getItem('streak') || '0');
+
+  const scoreEl = document.getElementById('score');
+  const perTapEl = document.getElementById('perTap');
+  const coinEl = document.getElementById('coin');
+  const mainBtn = document.getElementById('mainBtn');
+  const lbList = document.getElementById('lbList');
+  const streakText = document.getElementById('streakText');
+  const streakNum = document.getElementById('streakNum');
+  const progressFill = document.getElementById('progressFill');
+
+  // ===== ЗВУК ТАПА =====
+  let audioCtx = null;
+  function playTapSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.15);
+
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(2400, now);
+      gain2.gain.setValueAtTime(0.08, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      osc2.connect(gain2); gain2.connect(audioCtx.destination);
+      osc2.start(now); osc2.stop(now + 0.1);
+    } catch (e) {}
+  }
+
+  // ===== ЛИДЕРБОРД =====
+  const FAKE_NAMES = ['Alex_Pro', 'MegaTapper', 'RobloxKing', 'NoobSlayer', 'CoinMaster', 'DarkNinja'];
+  function getLeaderboard() {
+    let lb = JSON.parse(localStorage.getItem('leaderboard') || 'null');
+    if (!lb) {
+      lb = FAKE_NAMES.map(n => ({ name: n, score: Math.floor(Math.random() * 9000 + 1000), isBot: true }));
+      localStorage.setItem('leaderboard', JSON.stringify(lb));
+    }
+    return lb;
+  }
+
+  function updateLeaderboard() {
+    let lb = getLeaderboard();
+    lb.forEach(b => { if (b.isBot && Math.random() < 0.3) b.score += Math.floor(Math.random() * 50); });
+
+    const userName = tg?.initDataUnsafe?.user?.first_name || 'Ты';
+    const meIndex = lb.findIndex(x => x.name === userName);
+    if (meIndex >= 0) { lb[meIndex].score = score; lb[meIndex].isBot = false; }
+    else { lb.push({ name: userName, score: score, isBot: false }); }
+
+    lb.sort((a, b) => b.score - a.score);
+    lb = lb.slice(0, 5);
+    localStorage.setItem('leaderboard', JSON.stringify(lb));
+
+    lbList.innerHTML = '';
+    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+    lb.forEach((p, i) => {
+      const row = document.createElement('div');
+      const isMe = p.name === userName;
+      row.className = 'lb-row' + (isMe ? ' me' : '');
+      row.innerHTML = `
+        <span class="medal">${medals[i]}</span>
+        <span class="name">${p.name}</span>
+        <span class="val">${p.score.toLocaleString()}</span>
+      `;
+      lbList.appendChild(row);
+    });
+  }
+
+  function updateStreak() {
+    const target = 10;
+    const current = streak % target;
+    streakNum.textContent = `${current}/${target}`;
+    progressFill.style.width = (current / target * 100) + '%';
+    if (current === 0 && streak === 0) streakText.textContent = 'Тапни, чтобы начать!';
+    else if (current === 0) streakText.textContent = 'Серия обновлена! 🔥';
+    else streakText.textContent = `Отлично, продолжай!`;
+  }
+
+  function render() {
+    scoreEl.textContent = score.toLocaleString();
+    perTapEl.textContent = `+${perTap.toLocaleString()} за тап`;
+    mainBtn.innerHTML = `Улучшить (${upgradeCost.toLocaleString()} 🪙) <span>→</span>`;
+    mainBtn.disabled = score < upgradeCost;
+    updateLeaderboard();
+    updateStreak();
+  }
+
+  function save() {
+    localStorage.setItem('score', score);
+    localStorage.setItem('perTap', perTap);
+    localStorage.setItem('upgradeCost', upgradeCost);
+    localStorage.setItem('streak', streak);
+  }
+
+  coinEl.addEventListener('click', (e) => {
+    score += perTap;
+    streak++;
+    render(); save(); playTapSound();
+    tg?.HapticFeedback?.impactOccurred('light');
+
+    const float = document.createElement('div');
+    float.className = 'float';
+    float.textContent = `+${perTap.toLocaleString()}`;
+    float.style.left = (e.clientX - 40) + 'px';
+    float.style.top = (e.clientY - 40) + 'px';
+    document.body.appendChild(float);
+    setTimeout(() => float.remove(), 900);
+  });
+
+  // ===== КНОПКА =====
+  mainBtn.addEventListener('click', () => {
+    if (score < upgradeCost) return;
+    score -= upgradeCost;
+    perTap *= 100;                              // ×100 к тапу
+    upgradeCost = Math.floor(upgradeCost * 100); // ×100 к цене
+    render(); save(); playTapSound();
+    tg?.HapticFeedback?.notificationOccurred('success');
+  });
+
+  // Табы (визуально)
+  document.getElementById('tabTap').addEventListener('click', () => {
+    document.getElementById('tabTap').classList.add('active');
+    document.getElementById('tabUpgrade').classList.remove('active');
+  });
+  document.getElementById('tabUpgrade').addEventListener('click', () => {
+    document.getElementById('tabUpgrade').classList.add('active');
+    document.getElementById('tabTap').classList.remove('active');
+    mainBtn.scrollIntoView({ behavior: 'smooth' });
+  });
+
+  render();
+</script>
+</body>
+  </html>
